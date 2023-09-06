@@ -103,19 +103,13 @@ app.post("/login", (req, res) => {
       console.error("Error getting user:", err);
       res.status(500).json({ error: "Internal server error" });
     } else if (row) {
-      // So sánh mật khẩu đã nhập với mật khẩu đã được mã hóa trong cơ sở dữ liệu
-      bcrypt.compare(password, row.password, (err, result) => {
-        if (err) {
-          console.error("Error comparing passwords:", err);
-          res.status(500).json({ error: "Internal server error" });
-        } else if (result) {
-          // Mật khẩu khớp, đăng nhập thành công
-          res.json({ message: "Đăng nhập thành công" });
-        } else {
-          // Mật khẩu không khớp, đăng nhập thất bại
-          res.status(401).json({ error: "Mật khẩu không chính xác" });
-        }
-      });
+      if (row.password === password) {
+        // Mật khẩu khớp, đăng nhập thành công
+        res.json({ message: "Đăng nhập thành công" });
+      } else {
+        // Mật khẩu không khớp, đăng nhập thất bại
+        res.status(401).json({ error: "Mật khẩu không chính xác" });
+      }
     } else {
       // Người dùng không tồn tại
       res.status(404).json({ error: "Người dùng không tồn tại" });
