@@ -1,11 +1,11 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
-const bcrypt = require("bcrypt");
 
 const app = express();
 app.use(express.json());
 
 const db = new sqlite3.Database("userData.sqlite3");
+const dbBooking = new sqlite3.Database("bookingData.sqlite3");
 
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -15,6 +15,10 @@ db.serialize(() => {
     email TEXT
   )`);
 });
+dbBooking.serialize(() => {
+  dbBooking.run("CREATE TABLE bookings (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone INTEGER, pickupLocation TEXT, destination TEXT, carType TEXT, note TEXT)");
+});
+
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -113,6 +117,33 @@ app.post("/login", (req, res) => {
     } else {
       // Người dùng không tồn tại
       res.status(404).json({ error: "Người dùng không tồn tại" });
+    }
+  });
+});
+
+
+// API để đặt xe
+app.post("/bookings", (req, res) => {
+  const { name, phone, pickupLocation, destination, carType, note } = req.body;
+
+  dbBooking.run("INSERT INTO bookings (name, phone, pickupLocation, destination, carType, note) VALUES (?, ?, ?, ?, ?, ?)", [name, phone, pickupLocation, destination, carType, note], function (err) {
+    if (err) {
+      console.error(err);
+      res.status(500).send("Lỗi khi tạo đơn đặt xe");
+    } else {
+      res.status(200).send("Đơn đặt xe đã được tạo thành công");
+    }
+  });
+});
+
+// Lấy danh sách các đơn đặt xe
+app.get("/bookings", (req, res) => {
+  dbBooking.all("SELECT * FROM bookings", function (err, rows) {
+    if (err) {
+      console.error(err);
+      res.status(500).send("Lỗi khi lấy danh sách đơn đặt xe");
+    } else {
+      res.status(200).json(rows);
     }
   });
 });
