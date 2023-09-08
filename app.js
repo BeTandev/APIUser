@@ -5,7 +5,6 @@ const app = express();
 app.use(express.json());
 
 const db = new sqlite3.Database("userData.sqlite3");
-const dbBooking = new sqlite3.Database("bookingData.sqlite3");
 
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -14,11 +13,9 @@ db.serialize(() => {
     password TEXT,
     email TEXT
   )`);
-});
-dbBooking.serialize(() => {
-  dbBooking.run("CREATE TABLE bookings (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone INTEGER, pickupLocation TEXT, destination TEXT, carType TEXT, note TEXT)");
-});
 
+  db.run("CREATE TABLE IF NOT EXISTS bookings (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone INTEGER, pickupLocation TEXT, destination TEXT, carType TEXT, note TEXT)");
+});
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -29,6 +26,7 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   next();
 });
+
 
 app.get("/users", (req, res) => {
   db.all("SELECT * FROM users", (err, rows) => {
@@ -126,7 +124,7 @@ app.post("/login", (req, res) => {
 app.post("/bookings", (req, res) => {
   const { name, phone, pickupLocation, destination, carType, note } = req.body;
 
-  dbBooking.run("INSERT INTO bookings (name, phone, pickupLocation, destination, carType, note) VALUES (?, ?, ?, ?, ?, ?)", [name, phone, pickupLocation, destination, carType, note], function (err) {
+  db.run("INSERT INTO bookings (name, phone, pickupLocation, destination, carType, note) VALUES (?, ?, ?, ?, ?, ?)", [name, phone, pickupLocation, destination, carType, note], function (err) {
     if (err) {
       console.error(err);
       res.status(500).send("Lỗi khi tạo đơn đặt xe");
@@ -138,7 +136,7 @@ app.post("/bookings", (req, res) => {
 
 // Lấy danh sách các đơn đặt xe
 app.get("/bookings", (req, res) => {
-  dbBooking.all("SELECT * FROM bookings", function (err, rows) {
+  db.all("SELECT * FROM bookings", function (err, rows) {
     if (err) {
       console.error(err);
       res.status(500).send("Lỗi khi lấy danh sách đơn đặt xe");
