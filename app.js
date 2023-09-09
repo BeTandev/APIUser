@@ -14,7 +14,25 @@ db.serialize(() => {
     email TEXT
   )`);
 
-  db.run("CREATE TABLE IF NOT EXISTS bookings (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, phone INTEGER, pickupLocation TEXT, destination TEXT, carType TEXT, note TEXT)");
+  db.run(
+    `CREATE TABLE IF NOT EXISTS bookings (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+      name TEXT, 
+      phone INTEGER, 
+      pickupLocation TEXT, 
+      destination TEXT, 
+      carType TEXT, 
+      note TEXT)`
+  );
+
+  db.run(`
+  CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    email TEXT,
+    phoneNumber INTEGER,
+    message TEXT
+  )
+`);
 });
 
 app.use((req, res, next) => {
@@ -26,7 +44,6 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   next();
 });
-
 
 app.get("/users", (req, res) => {
   db.all("SELECT * FROM users", (err, rows) => {
@@ -119,19 +136,22 @@ app.post("/login", (req, res) => {
   });
 });
 
-
 // API để đặt xe
 app.post("/bookings", (req, res) => {
   const { name, phone, pickupLocation, destination, carType, note } = req.body;
 
-  db.run("INSERT INTO bookings (name, phone, pickupLocation, destination, carType, note) VALUES (?, ?, ?, ?, ?, ?)", [name, phone, pickupLocation, destination, carType, note], function (err) {
-    if (err) {
-      console.error(err);
-      res.status(500).send("Lỗi khi tạo đơn đặt xe");
-    } else {
-      res.status(200).send("Đơn đặt xe đã được tạo thành công");
+  db.run(
+    "INSERT INTO bookings (name, phone, pickupLocation, destination, carType, note) VALUES (?, ?, ?, ?, ?, ?)",
+    [name, phone, pickupLocation, destination, carType, note],
+    function (err) {
+      if (err) {
+        console.error(err);
+        res.status(500).send("Lỗi khi tạo đơn đặt xe");
+      } else {
+        res.status(200).send("Đơn đặt xe đã được tạo thành công");
+      }
     }
-  });
+  );
 });
 
 // Lấy danh sách các đơn đặt xe
@@ -142,6 +162,36 @@ app.get("/bookings", (req, res) => {
       res.status(500).send("Lỗi khi lấy danh sách đơn đặt xe");
     } else {
       res.status(200).json(rows);
+    }
+  });
+});
+
+
+
+// GET: Lấy tất cả các tin nhắn
+app.get('/messages', (req, res) => {
+  db.all('SELECT * FROM messages', (err, rows) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Lỗi server' });
+    } else {
+      res.json(rows);
+    }
+  });
+});
+
+// POST: Tạo một tin nhắn mới
+app.post('/messages', (req, res) => {
+  const { name, email, phonenumber, message } = req.body;
+  const sql = 'INSERT INTO messages (name, email, phonenumber, message) VALUES (?, ?, ?, ?)';
+  const params = [name, email, phonenumber, message];
+
+  db.run(sql, params, function (err) {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Lỗi server' });
+    } else {
+      res.json({ id: this.lastID });
     }
   });
 });
