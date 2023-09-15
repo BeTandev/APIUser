@@ -72,18 +72,35 @@ app.get("/users/:id", (req, res) => {
 
 app.post("/users", (req, res) => {
   const { username, password, email } = req.body;
-  db.run(
-    "INSERT INTO users (username, password, email) VALUES (?, ?, ?)",
-    [username, password, email],
-    (err) => {
-      if (err) {
-        console.error("Error creating user:", err);
-        res.status(500).json({ error: "Internal server error" });
-      } else {
-        res.json({ message: "User created successfully" });
-      }
+
+  // Truy vấn cơ sở dữ liệu để kiểm tra tên người dùng đã tồn tại hay chưa
+  db.get("SELECT username FROM users WHERE username = ?", [username], (err, row) => {
+    if (err) {
+      console.error("Error checking username:", err);
+      res.status(500).json({ error: "Internal server error" });
+      return;
     }
-  );
+
+    if (row) {``
+      // Tên người dùng đã tồn tại, trả về phản hồi lỗi
+      res.status(400).json({ error: "Username already exists" });
+      return;
+    }
+
+    // Tên người dùng chưa tồn tại, thêm người dùng mới vào cơ sở dữ liệu
+    db.run(
+      "INSERT INTO users (username, password, email) VALUES (?, ?, ?)",
+      [username, password, email],
+      (err) => {
+        if (err) {
+          console.error("Error creating user:", err);
+          res.status(500).json({ error: "Internal server error" });
+        } else {
+          res.json({ message: "User created successfully" });
+        }
+      }
+    );
+  });
 });
 
 app.put("/users/:id", (req, res) => {
