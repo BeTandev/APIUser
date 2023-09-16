@@ -241,7 +241,7 @@ app.post('/registerDriver', upload.single('faceImage'), (req, res) => {
   });
 });
 // API lấy dữ liệu của tất cả các tài xế
-app.get('/getData', (req, res) => {
+app.get('/registerDriver', (req, res) => {
   // Truy vấn tất cả các tài xế trong cơ sở dữ liệu
   db.all('SELECT * FROM drivers', (err, rows) => {
     if (err) {
