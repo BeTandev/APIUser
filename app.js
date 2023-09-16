@@ -5,6 +5,7 @@ const multer = require('multer');
 
 const app = express();
 app.use(express.json());
+app.use('/uploads', express.static('/uploads'));
 
 const db = new sqlite3.Database("userData.sqlite3");
 
@@ -211,14 +212,16 @@ app.post("/messages", (req, res) => {
 });
 
 
+// Cấu hình Multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    cb(null, '/uploads'); // Thay đổi 'path/to/upload/directory' thành đường dẫn thực tế đến thư mục tải lên
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
+    cb(null, file.originalname);
   }
 });
+
 const upload = multer({ storage: storage });
 
 // Đăng ký tài xế
