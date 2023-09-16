@@ -35,13 +35,14 @@ db.serialize(() => {
     message TEXT
     )
   `);
+  
   db.run(`
   CREATE TABLE IF NOT EXISTS drivers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fullName TEXT,
     dateOfBirth TEXT,
-    idNumber TEXT,
-    phoneNumber INT,
+    idNumber INTEGER,
+    phoneNumber INTEGER,
     address TEXT,
     faceImage TEXT
     ) 
@@ -230,7 +231,7 @@ app.post('/registerDriver', upload.single('faceImage'), (req, res) => {
 
   // Thêm thông tin tài xế vào cơ sở dữ liệu
   db.run(`INSERT INTO drivers (fullName, dateOfBirth, idNumber, phoneNumber, address, faceImage)
-    VALUES (?, ?, ?, ?, ?, ?)`, [fullName, dateOfBirth, idNumber, parsedPhoneNumber, address, faceImage], function (err) {
+    VALUES (?, ?, ?, ?, ?, ?)`, [fullName, dateOfBirth, parseInt(idNumber), parsedPhoneNumber, address, faceImage], function (err) {
     if (err) {
       console.error('Lỗi khi thêm thông tin tài xế:', err);
       res.status(500).json({ error: 'Đã xảy ra lỗi' });
@@ -238,7 +239,7 @@ app.post('/registerDriver', upload.single('faceImage'), (req, res) => {
       console.log('Tài xế đã được đăng ký thành công');
       res.status(200).json({ message: 'Tài xế đã được đăng ký thành công' });
     }
-  });
+});
 });
 // API lấy dữ liệu của tất cả các tài xế
 app.get('/registerDriver', (req, res) => {
