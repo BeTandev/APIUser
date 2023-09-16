@@ -1,6 +1,8 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
-const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken')
+const app = express();
+app.use(express.json());
 
 const router = express.Router();
 
