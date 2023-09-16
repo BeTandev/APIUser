@@ -215,10 +215,10 @@ app.post("/messages", (req, res) => {
 // Cấu hình Multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, '/uploads'); // Thay đổi 'path/to/upload/directory' thành đường dẫn thực tế đến thư mục tải lên
+    cb(null, 'uploads/'); // Đường dẫn đến thư mục lưu trữ hình ảnh
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    cb(null, file.originalname); // Tên file sẽ được lưu lại
   }
 });
 
@@ -242,7 +242,7 @@ app.post('/registerDriver', upload.single('faceImage'), (req, res) => {
       console.log('Tài xế đã được đăng ký thành công');
       res.status(200).json({ message: 'Tài xế đã được đăng ký thành công' });
     }
-});
+  });
 });
 // API lấy dữ liệu của tất cả các tài xế
 app.get('/registerDriver', (req, res) => {
