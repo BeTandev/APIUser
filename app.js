@@ -2,10 +2,12 @@ const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const jwt = require("jsonwebtoken");
 const multer = require('multer');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
-app.use('/uploads', express.static('/uploads'));
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads/')));
 
 const db = new sqlite3.Database("userData.sqlite3");
 
@@ -215,7 +217,7 @@ app.post("/messages", (req, res) => {
 // Cấu hình Multer
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Đường dẫn đến thư mục lưu trữ hình ảnh
+    cb(null, path.join(__dirname, 'uploads/')); // Đường dẫn tương đối đến thư mục lưu trữ hình ảnh
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname); // Tên file sẽ được lưu lại
