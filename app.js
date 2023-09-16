@@ -240,6 +240,18 @@ app.post('/registerDriver', upload.single('faceImage'), (req, res) => {
     }
   });
 });
+// API lấy dữ liệu của tất cả các tài xế
+app.get('/getData', (req, res) => {
+  // Truy vấn tất cả các tài xế trong cơ sở dữ liệu
+  db.all('SELECT * FROM drivers', (err, rows) => {
+    if (err) {
+      console.error('Lỗi khi lấy dữ liệu tài xế:', err);
+      res.status(500).json({ error: 'Đã xảy ra lỗi' });
+    } else {
+      res.status(200).json(rows);
+    }
+  });
+});
 
 
 const port = 3000;
