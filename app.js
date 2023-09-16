@@ -1,6 +1,7 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const multer = require('multer');
 
 const app = express();
 app.use(express.json());
@@ -32,8 +33,19 @@ db.serialize(() => {
     email TEXT,
     phoneNumber INTEGER,
     message TEXT
-  )
-`);
+    )
+  `);
+  db.run(`
+  CREATE TABLE IF NOT EXISTS drivers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fullName TEXT,
+    dateOfBirth TEXT,
+    idNumber TEXT,
+    phoneNumber INT,
+    address TEXT,
+    faceImage TEXT
+    ) 
+  `);
 });
 
 app.use((req, res, next) => {
@@ -75,33 +87,38 @@ app.post("/users", (req, res) => {
   const { username, password, email } = req.body;
 
   // Truy vấn cơ sở dữ liệu để kiểm tra tên người dùng đã tồn tại hay chưa
-  db.get("SELECT username FROM users WHERE username = ?", [username], (err, row) => {
-    if (err) {
-      console.error("Error checking username:", err);
-      res.status(500).json({ error: "Internal server error" });
-      return;
-    }
-
-    if (row) {``
-      // Tên người dùng đã tồn tại, trả về phản hồi lỗi
-      res.status(400).json({ error: "Username already exists" });
-      return;
-    }
-
-    // Tên người dùng chưa tồn tại, thêm người dùng mới vào cơ sở dữ liệu
-    db.run(
-      "INSERT INTO users (username, password, email) VALUES (?, ?, ?)",
-      [username, password, email],
-      (err) => {
-        if (err) {
-          console.error("Error creating user:", err);
-          res.status(500).json({ error: "Internal server error" });
-        } else {
-          res.json({ message: "User created successfully" });
-        }
+  db.get(
+    "SELECT username FROM users WHERE username = ?",
+    [username],
+    (err, row) => {
+      if (err) {
+        console.error("Error checking username:", err);
+        res.status(500).json({ error: "Internal server error" });
+        return;
       }
-    );
-  });
+
+      if (row) {
+        ``;
+        // Tên người dùng đã tồn tại, trả về phản hồi lỗi
+        res.status(400).json({ error: "Username already exists" });
+        return;
+      }
+
+      // Tên người dùng chưa tồn tại, thêm người dùng mới vào cơ sở dữ liệu
+      db.run(
+        "INSERT INTO users (username, password, email) VALUES (?, ?, ?)",
+        [username, password, email],
+        (err) => {
+          if (err) {
+            console.error("Error creating user:", err);
+            res.status(500).json({ error: "Internal server error" });
+          } else {
+            res.json({ message: "User created successfully" });
+          }
+        }
+      );
+    }
+  );
 });
 
 app.put("/users/:id", (req, res) => {
@@ -188,6 +205,38 @@ app.post("/messages", (req, res) => {
       res.status(500).json({ error: "Lỗi server" });
     } else {
       res.json({ id: this.lastID });
+    }
+  });
+});
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage: storage });
+
+// Đăng ký tài xế
+app.post('/registerDriver', upload.single('faceImage'), (req, res) => {
+  const { fullName, dateOfBirth, idNumber, phoneNumber, address } = req.body;
+  const faceImage = req.file.filename;
+
+  // Chuyển đổi số điện thoại sang kiểu INT
+  const parsedPhoneNumber = parseInt(phoneNumber);
+
+  // Thêm thông tin tài xế vào cơ sở dữ liệu
+  db.run(`INSERT INTO drivers (fullName, dateOfBirth, idNumber, phoneNumber, address, faceImage)
+    VALUES (?, ?, ?, ?, ?, ?)`, [fullName, dateOfBirth, idNumber, parsedPhoneNumber, address, faceImage], function (err) {
+    if (err) {
+      console.error('Lỗi khi thêm thông tin tài xế:', err);
+      res.status(500).json({ error: 'Đã xảy ra lỗi' });
+    } else {
+      console.log('Tài xế đã được đăng ký thành công');
+      res.status(200).json({ message: 'Tài xế đã được đăng ký thành công' });
     }
   });
 });
