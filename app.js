@@ -149,6 +149,31 @@ app.delete("/users/:id", (req, res) => {
     }
   });
 });
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  // Truy vấn cơ sở dữ liệu để kiểm tra tên người dùng và mật khẩu
+  db.get(
+    "SELECT * FROM users WHERE username = ? AND password = ?",
+    [username, password],
+    (err, row) => {
+      if (err) {
+        console.error("Error checking credentials:", err);
+        res.status(500).json({ error: "Internal server error" });
+        return;
+      }
+
+      if (!row) {
+        // Tên người dùng hoặc mật khẩu không chính xác, trả về phản hồi lỗi
+        res.status(401).json({ error: "Invalid username or password" });
+        return;
+      }
+
+      // Đăng nhập thành công, trả về phản hồi thành công
+      res.json({ message: "Login successful" });
+    }
+  );
+});
 
 // API để đặt xe
 app.post("/bookings", (req, res) => {
@@ -210,12 +235,12 @@ app.post("/messages", (req, res) => {
 });
 
 // Đăng ký tài xế
-app.post('/regisDriver', (req, res) => {
+app.post("/regisDriver", (req, res) => {
   const { name, dob, cmnd, phone, address } = req.body;
 
   // Kiểm tra nếu thiếu thông tin
   if (!name || !dob || !cmnd || !phone || !address) {
-    return res.status(400).json({ error: 'Missing information' });
+    return res.status(400).json({ error: "Missing information" });
   }
 
   // Thêm tài xế vào cơ sở dữ liệu
@@ -226,7 +251,7 @@ app.post('/regisDriver', (req, res) => {
   db.run(query, [name, dob, cmnd, phone, address], function (err) {
     if (err) {
       console.error(err);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: "Internal server error" });
     }
 
     // Trả về thông tin tài xế đã đăng ký
@@ -235,19 +260,18 @@ app.post('/regisDriver', (req, res) => {
   });
 });
 // Lấy tất cả các tài xế
-app.get('/regisDriver', (req, res) => {
-  const query = 'SELECT * FROM drivers';
+app.get("/regisDriver", (req, res) => {
+  const query = "SELECT * FROM drivers";
 
   db.all(query, (err, rows) => {
     if (err) {
       console.error(err);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: "Internal server error" });
     }
 
     res.json(rows);
   });
 });
-
 
 const port = 3000;
 app.listen(port, () => {
