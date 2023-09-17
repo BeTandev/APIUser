@@ -1,13 +1,11 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const jwt = require("jsonwebtoken");
-const multer = require('multer');
-const path = require('path');
+const multer = require("multer");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads/')));
 
 const db = new sqlite3.Database("userData.sqlite3");
 
@@ -38,18 +36,16 @@ db.serialize(() => {
     message TEXT
     )
   `);
-  
-  db.run(`
-  CREATE TABLE IF NOT EXISTS drivers (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fullName TEXT,
-    dateOfBirth TEXT,
-    idNumber INTEGER,
-    phoneNumber INTEGER,
-    address TEXT,
-    faceImage TEXT
-    ) 
-  `);
+  db.run(
+    `CREATE TABLE IF NOT EXISTS drivers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, 
+      name TEXT, 
+      dob TEXT, 
+      cmnd INTEGER, 
+      phone INTEGER, 
+      address TEXT
+      )`
+  );
 });
 
 app.use((req, res, next) => {
@@ -213,52 +209,44 @@ app.post("/messages", (req, res) => {
   });
 });
 
-
-// Cấu hình Multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads/')); // Đường dẫn tương đối đến thư mục lưu trữ hình ảnh
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname); // Tên file sẽ được lưu lại
-  }
-});
-
-const upload = multer({ storage: storage });
-
 // Đăng ký tài xế
-app.post('/registerDriver', upload.single('faceImage'), (req, res) => {
-  const { fullName, dateOfBirth, idNumber, phoneNumber, address } = req.body;
-  const faceImage = req.file.filename;
+app.post('/regisDriver', (req, res) => {
+  const { name, dob, cmnd, phone, address } = req.body;
 
-  // Chuyển đổi số điện thoại sang kiểu INT
-  const parsedPhoneNumber = parseInt(phoneNumber);
+  // Kiểm tra nếu thiếu thông tin
+  if (!name || !dob || !cmnd || !phone || !address) {
+    return res.status(400).json({ error: 'Missing information' });
+  }
 
-  // Thêm thông tin tài xế vào cơ sở dữ liệu
-  db.run(`INSERT INTO drivers (fullName, dateOfBirth, idNumber, phoneNumber, address, faceImage)
-    VALUES (?, ?, ?, ?, ?, ?)`, [fullName, dateOfBirth, parseInt(idNumber), parsedPhoneNumber, address, faceImage], function (err) {
+  // Thêm tài xế vào cơ sở dữ liệu
+  const query = `
+    INSERT INTO drivers (name, dob, cmnd, phone, address)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  db.run(query, [name, dob, cmnd, phone, address], function (err) {
     if (err) {
-      console.error('Lỗi khi thêm thông tin tài xế:', err);
-      res.status(500).json({ error: 'Đã xảy ra lỗi' });
-    } else {
-      console.log('Tài xế đã được đăng ký thành công');
-      res.status(200).json({ message: 'Tài xế đã được đăng ký thành công' });
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
     }
+
+    // Trả về thông tin tài xế đã đăng ký
+    const driverId = this.lastID;
+    res.status(201).json({ id: driverId, name, dob, cmnd, phone, address });
   });
 });
-// API lấy dữ liệu của tất cả các tài xế
-app.get('/registerDriver', (req, res) => {
-  // Truy vấn tất cả các tài xế trong cơ sở dữ liệu
-  db.all('SELECT * FROM drivers', (err, rows) => {
+// Lấy tất cả các tài xế
+app.get('/regisDriver', (req, res) => {
+  const query = 'SELECT * FROM drivers';
+
+  db.all(query, (err, rows) => {
     if (err) {
-      console.error('Lỗi khi lấy dữ liệu tài xế:', err);
-      res.status(500).json({ error: 'Đã xảy ra lỗi' });
-    } else {
-      res.status(200).json(rows);
+      console.error(err);
+      return res.status(500).json({ error: 'Internal server error' });
     }
+
+    res.json(rows);
   });
 });
-
 
 const port = 3000;
 app.listen(port, () => {
